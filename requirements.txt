@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+pydantic
+langchain
+langchain-google-genai
+langchain-huggingface
+langchain-community
+langchain-text-splitters
+google-generativeai
+faiss-cpu
+sentence-transformers
+scikit-learn
+pandas
+numpy
+streamlit
+plotly
+requests
