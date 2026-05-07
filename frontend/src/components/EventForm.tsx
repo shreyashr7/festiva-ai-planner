@@ -1,157 +1,157 @@
+import { useState } from "react";
 import {
   Sparkles,
+  Send,
   IndianRupee,
   Users,
   MapPin,
   CalendarDays,
-  ChevronDown,
+  PartyPopper,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { EventFormData } from "@/lib/types";
-import { MONTH_NAMES, formatCurrency } from "@/lib/utils";
+import { parseEventInput } from "@/lib/parser";
+import { formatCurrency, MONTH_NAMES } from "@/lib/utils";
 
 interface EventFormProps {
-  data: EventFormData;
-  onChange: (data: EventFormData) => void;
-  onSubmit: () => void;
+  onSubmit: (data: EventFormData) => void;
   loading: boolean;
 }
 
-const EVENT_TYPES = ["Wedding", "Corporate", "Birthday"] as const;
+const EXAMPLES = [
+  "Wedding in Bangalore, budget ₹10L",
+  "Corporate event, 200 guests, ₹15L, December",
+  "Birthday party in Mumbai, 50 guests, budget ₹5L",
+  "Grand wedding, 800 guests, ₹40L, Hyderabad, February",
+];
 
-export default function EventForm({ data, onChange, onSubmit, loading }: EventFormProps) {
+export default function EventForm({ onSubmit, loading }: EventFormProps) {
+  const [input, setInput] = useState("");
+  const [parsed, setParsed] = useState<EventFormData | null>(null);
+
+  function handleInputChange(value: string) {
+    setInput(value);
+    if (value.trim().length > 3) {
+      setParsed(parseEventInput(value));
+    } else {
+      setParsed(null);
+    }
+  }
+
+  function handleSubmit() {
+    if (!input.trim()) return;
+    const data = parseEventInput(input);
+    onSubmit(data);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  }
+
+  function handleExample(example: string) {
+    setInput(example);
+    setParsed(parseEventInput(example));
+  }
+
   return (
     <Card className="sticky top-6 border-border/60 bg-white/80 backdrop-blur-sm">
-      <CardContent className="p-6 space-y-6">
+      <CardContent className="p-6 space-y-5">
         {/* Header */}
-        <div className="flex items-center gap-3 pb-2">
+        <div className="flex items-center gap-3 pb-1">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
             <Sparkles className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-base font-semibold">Event Configuration</h2>
-            <p className="text-xs text-muted-foreground">Configure your event details</p>
+            <h2 className="text-base font-semibold">Plan Your Event</h2>
+            <p className="text-xs text-muted-foreground">Describe your event in plain English</p>
           </div>
         </div>
 
-        {/* Event Type */}
+        {/* Text Input */}
         <div className="space-y-2">
-          <label className="text-sm font-medium flex items-center gap-1.5">
-            <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-            Event Type
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {EVENT_TYPES.map((type) => (
+          <div className="relative">
+            <textarea
+              value={input}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Wedding in Bangalore, budget ₹10L, 300 guests, December"
+              rows={3}
+              className="w-full resize-none rounded-xl border border-input bg-background px-4 py-3 pr-12 text-sm leading-relaxed placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40"
+            />
+            <button
+              onClick={handleSubmit}
+              disabled={loading || !input.trim()}
+              className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px] font-mono">Enter</kbd> to generate
+          </p>
+        </div>
+
+        {/* Examples */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">Try an example:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {EXAMPLES.map((ex) => (
               <button
-                key={type}
-                onClick={() => onChange({ ...data, event_type: type })}
-                className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 cursor-pointer ${
-                  data.event_type === type
-                    ? "bg-primary text-primary-foreground shadow-md scale-[1.02]"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                }`}
+                key={ex}
+                onClick={() => handleExample(ex)}
+                className="rounded-lg border border-border/60 bg-secondary/50 px-2.5 py-1.5 text-[11px] text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary hover:border-primary/30 cursor-pointer"
               >
-                {type === "Wedding" && "💒"}
-                {type === "Corporate" && "💼"}
-                {type === "Birthday" && "🎂"}{" "}
-                {type}
+                {ex}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Guest Count */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium flex items-center justify-between">
-            <span className="flex items-center gap-1.5">
-              <Users className="h-3.5 w-3.5 text-muted-foreground" />
-              Guests
-            </span>
-            <span className="text-primary font-semibold">{data.guest_count}</span>
-          </label>
-          <input
-            type="range"
-            min={100}
-            max={1200}
-            step={50}
-            value={data.guest_count}
-            onChange={(e) => onChange({ ...data, guest_count: Number(e.target.value) })}
-            className="w-full h-2 rounded-full appearance-none bg-secondary accent-primary cursor-pointer"
-          />
-          <div className="flex justify-between text-[11px] text-muted-foreground">
-            <span>100</span>
-            <span>600</span>
-            <span>1200</span>
+        {/* Live Parse Preview */}
+        {parsed && (
+          <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/[0.03] p-4 animate-fade-in">
+            <p className="text-xs font-semibold text-primary flex items-center gap-1.5">
+              <Sparkles className="h-3 w-3" />
+              Parsed from your input
+            </p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="flex items-center gap-1.5">
+                <PartyPopper className="h-3 w-3 text-muted-foreground" />
+                <span className="text-muted-foreground">Type:</span>
+                <span className="font-medium">{parsed.event_type}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <IndianRupee className="h-3 w-3 text-muted-foreground" />
+                <span className="text-muted-foreground">Budget:</span>
+                <span className="font-medium">{formatCurrency(parsed.total_budget)}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Users className="h-3 w-3 text-muted-foreground" />
+                <span className="text-muted-foreground">Guests:</span>
+                <span className="font-medium">{parsed.guest_count}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <MapPin className="h-3 w-3 text-muted-foreground" />
+                <span className="text-muted-foreground">City:</span>
+                <span className="font-medium">{parsed.location}</span>
+              </div>
+              <div className="flex items-center gap-1.5 col-span-2">
+                <CalendarDays className="h-3 w-3 text-muted-foreground" />
+                <span className="text-muted-foreground">Month:</span>
+                <span className="font-medium">{MONTH_NAMES[parsed.event_month - 1]}</span>
+              </div>
+            </div>
           </div>
-        </div>
-
-        {/* Budget */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium flex items-center justify-between">
-            <span className="flex items-center gap-1.5">
-              <IndianRupee className="h-3.5 w-3.5 text-muted-foreground" />
-              Budget
-            </span>
-            <span className="text-primary font-semibold">{formatCurrency(data.total_budget)}</span>
-          </label>
-          <input
-            type="range"
-            min={500000}
-            max={6000000}
-            step={100000}
-            value={data.total_budget}
-            onChange={(e) => onChange({ ...data, total_budget: Number(e.target.value) })}
-            className="w-full h-2 rounded-full appearance-none bg-secondary accent-primary cursor-pointer"
-          />
-          <div className="flex justify-between text-[11px] text-muted-foreground">
-            <span>₹5L</span>
-            <span>₹30L</span>
-            <span>₹60L</span>
-          </div>
-        </div>
-
-        {/* Month */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium flex items-center gap-1.5">
-            <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-            Event Month
-          </label>
-          <div className="relative">
-            <select
-              value={data.event_month}
-              onChange={(e) => onChange({ ...data, event_month: Number(e.target.value) })}
-              className="w-full appearance-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
-            >
-              {MONTH_NAMES.map((name, i) => (
-                <option key={i} value={i + 1}>
-                  {name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          </div>
-        </div>
-
-        {/* Location */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-            Location
-          </label>
-          <input
-            type="text"
-            value={data.location}
-            onChange={(e) => onChange({ ...data, location: e.target.value })}
-            placeholder="Bengaluru"
-            className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
+        )}
 
         {/* Submit */}
         <Button
-          onClick={onSubmit}
-          disabled={loading}
+          onClick={handleSubmit}
+          disabled={loading || !input.trim()}
           size="lg"
           className="w-full text-base font-semibold"
         >

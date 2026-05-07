@@ -14,13 +14,6 @@ import type { EventFormData, EventPlanResponse } from "@/lib/types";
 
 export default function App() {
   const [apiStatus, setApiStatus] = useState<"connected" | "offline" | "checking">("checking");
-  const [formData, setFormData] = useState<EventFormData>({
-    event_type: "Wedding",
-    guest_count: 500,
-    total_budget: 2500000,
-    event_month: 5,
-    location: "Bengaluru",
-  });
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<EventPlanResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +37,7 @@ export default function App() {
     };
   }, []);
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = useCallback(async (formData: EventFormData) => {
     setLoading(true);
     setError(null);
     try {
@@ -59,7 +52,7 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [formData]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,8 +63,6 @@ export default function App() {
           {/* Sidebar - Form */}
           <aside className="w-[340px] shrink-0 hidden lg:block">
             <EventForm
-              data={formData}
-              onChange={setFormData}
               onSubmit={handleSubmit}
               loading={loading}
             />
@@ -80,8 +71,6 @@ export default function App() {
           {/* Mobile form */}
           <div className="lg:hidden w-full mb-6">
             <EventForm
-              data={formData}
-              onChange={setFormData}
               onSubmit={handleSubmit}
               loading={loading}
             />
