@@ -22,8 +22,8 @@ interface EventFormProps {
 const EXAMPLES = [
   "Wedding in Bangalore, budget ₹10L",
   "Corporate event, 200 guests, ₹15L, December",
-  "Birthday party in Mumbai, 50 guests, budget ₹5L",
-  "Grand wedding, 800 guests, ₹40L, Hyderabad, February",
+  "Birthday party in Bangalore, 50 guests, budget ₹5L",
+  "Grand wedding, 800 guests, ₹40L, Bangalore, February",
 ];
 
 export default function EventForm({ onSubmit, loading }: EventFormProps) {
